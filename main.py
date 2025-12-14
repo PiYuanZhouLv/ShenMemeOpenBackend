@@ -8,7 +8,7 @@ emoji.unicode_codes.get_emoji_unicode_dict = lambda lang: {
 # End fix.
 
 from flask import Flask, request, send_file
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageChops
 from pilmoji import Pilmoji
 import requests as rq
 from io import BytesIO
@@ -34,6 +34,8 @@ def auto_newline(emoji: Pilmoji, xy: tuple[int, int], text: str, font: ImageFont
             dx, dy = text_emoji.getsize(line, ffont)
             text_emoji.text(((img_text.size[0]-dx)//2, y), line, 'black', ffont, align='center', emoji_position_offset=(0, round(30/145*(init_fontsize//int(div)))))
             y += dy
+    chop = ImageChops.difference(img_text, Image.new("RGB", img_text.size, (255, 255, 255)))
+    img_text = img_text.crop(chop.getbbox())
     rate = min(max_width/img_text.size[0], init_fontsize/img_text.size[1])
     new_size = tuple(map(lambda x: x*rate, img_text.size))
     emoji.image.paste(img_text.resize(map(int, new_size)), (int(xy[0]+(max_width-new_size[0])//2), int(xy[1]+(init_fontsize-new_size[1])//2)))
