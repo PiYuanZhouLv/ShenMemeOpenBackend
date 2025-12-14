@@ -84,13 +84,46 @@ def index():
 </head>
 <body>
     <form action="/meme" method="POST">
-        <label>QQ号（qq=）<input name="qq" required>*必填</label><br>
+        <label>QQ号（qq=）<input name="qq" placeholder="必填" required>*必填</label><br>
         <label>显示名称（name=）<input name="name">默认为QQ号</label><br>
-        <label>评论（comment=）<input name="comment">默认为“牛逼”</label><br>
-        <label>称呼（call=）<input name="call">默认为“神”</label><br>
-        <label>称谓（appellation=）<input name="appellation">默认为“他”</label><br>
-        <input type="submit">
+        <label>评论（comment=）<input placeholder="牛逼" name="comment">默认为“牛逼”</label><br>
+        <label>称呼（call=）<input placeholder="神" name="call">默认为“神”</label><br>
+        <label>称谓（appellation=）<input placeholder="他" name="appellation">默认为“他”</label><br>
+        GET URL: <a id="url"></a><br>
+        Submit by POST: <input type="submit">
     </form>
+    <script>
+        document.querySelector("input[name=name]").placeholder = document.querySelector("input[name=qq]").value || "默认为QQ号";
+        document.querySelector("input[name=qq]").addEventListener("input", ()=>{
+            document.querySelector("input[name=name]").placeholder = document.querySelector("input[name=qq]").value || "默认为QQ号";
+        })
+        function update(){
+            if(!document.querySelector("input[name=qq]").value){
+                document.getElementById("url").href = '#';
+                document.getElementById("url").innerText = "QQ号为必填项";
+                return;
+            }
+            document.getElementById("url").innerText = "/meme";
+            let first = true;
+            for(let i of document.forms[0].elements){
+                if(i.type=="submit"){
+                    continue;
+                }
+                if(i.value){
+                    document.getElementById("url").innerText += `${first?"?":"&"}${i.name}=${i.value}`;
+                    first = false;
+                }
+            }
+            document.getElementById("url").href = document.getElementById("url").innerText;
+        }
+        update();
+        for(let i of document.forms[0].elements){
+            if(i.type=="submit"){
+                continue;
+            }
+            i.addEventListener("input", update);
+        }
+    </script>
 </body>
 '''
 
