@@ -61,13 +61,13 @@ def generate_meme():
         return 'Something wrong with QQ\'s Avatar API.', 500
     
     meme = Image.new("RGB", (1024, 1024), (255, 255, 255))
-    fontDB = ImageFont.truetype(r'C:\Windows\Fonts\MSYHBD.TTC')
+    fontBD = ImageFont.truetype(r'C:\Windows\Fonts\MSYHBD.TTC')
     font = ImageFont.truetype(r'C:\Windows\Fonts\MSYH.TTC')
     # draw = ImageDraw.Draw(meme)
     with Pilmoji(meme) as emoji:
-        auto_newline(emoji, (10, 10), f'请问你见到 {name} 了吗', fontDB, 145, 1004)
+        auto_newline(emoji, (10, 10), f'请问你见到 {name} 了吗', fontBD, 145, 1004)
         meme.paste(img.resize((690, 690)), (167, 160))
-        auto_newline(emoji, (10, 854), f'非常{comment}！简直就是{call}!', fontDB, 110, 1004)
+        auto_newline(emoji, (10, 854), f'非常{comment}！简直就是{call}!', fontBD, 110, 1004)
         auto_newline(emoji, (0, 964), f'{appel}也没失踪也没怎么样，我只是觉得你们都该看一下', font, 60, 1024)
     io = BytesIO()
     meme.save(io, 'jpeg')
