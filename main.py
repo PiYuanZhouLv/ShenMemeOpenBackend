@@ -20,11 +20,14 @@ def auto_newline(emoji: Pilmoji, xy: tuple[int, int], text: str, font: ImageFont
     print(width/max_width)
     div = int((width/max_width)**(0.5+5/len(text)))
     if div==0:
-        emoji.text((xy[0]+(max_width-width)//2, xy[1]), text, 'black', font.font_variant(size=init_fontsize), align='center', emoji_position_offset=(0, round(30/145*init_fontsize)))
-        return
-    ffont = font.font_variant(size=init_fontsize//int(div))
-    step = len(text) // div + 1
-    lines = [text[i:i+step] for i in range(0, len(text), step)]
+        fsize = init_fontsize
+        ffont = font.font_variant(size=init_fontsize)
+        lines = [text]
+    else:
+        fsize = init_fontsize//int(div)
+        ffont = font.font_variant(size=fsize)
+        step = len(text) // div + 1
+        lines = [text[i:i+step] for i in range(0, len(text), step)]
     final = '\n'.join(lines)
     final_size = emoji.getsize(final, ffont)
     img_text = Image.new("RGB", (int(final_size[0]), int(final_size[1]+30)), (255, 255, 255))
@@ -32,7 +35,7 @@ def auto_newline(emoji: Pilmoji, xy: tuple[int, int], text: str, font: ImageFont
         y = 0
         for line in lines:
             dx, dy = text_emoji.getsize(line, ffont)
-            text_emoji.text(((img_text.size[0]-dx)//2, y), line, 'black', ffont, align='center', emoji_position_offset=(0, round(30/145*(init_fontsize//int(div)))))
+            text_emoji.text(((img_text.size[0]-dx)//2, y), line, 'black', ffont, align='center', emoji_position_offset=(0, round(30/145*(fsize))))
             y += dy
     chop = ImageChops.difference(img_text, Image.new("RGB", img_text.size, (255, 255, 255)))
     img_text = img_text.crop(chop.getbbox())
@@ -40,16 +43,16 @@ def auto_newline(emoji: Pilmoji, xy: tuple[int, int], text: str, font: ImageFont
     new_size = tuple(map(lambda x: x*rate, img_text.size))
     emoji.image.paste(img_text.resize(map(int, new_size)), (int(xy[0]+(max_width-new_size[0])//2), int(xy[1]+(init_fontsize-new_size[1])//2)))
 
-@app.route('/meme')
+@app.route('/meme', methods=['GET', 'POST'])
 def generate_meme():
-    if 'qq' not in request.args:
+    if 'qq' not in request.values:
         return 'Param "qq" is required.', 400
     
-    qqId = request.args['qq']
-    name = request.args.get('name', qqId)
-    comment = request.args.get('comment', '牛逼')
-    call = request.args.get('call', '神')
-    appel = request.args.get('appellation', '他')
+    qqId = request.values['qq']
+    name = request.values.get('name', None) or qqId
+    comment = request.values.get('comment', None) or '牛逼'
+    call = request.values.get('call', None) or '神'
+    appel = request.values.get('appellation', None) or '他'
 
     try:
         io = BytesIO(rq.get(f'http://q.qlogo.cn/headimg_dl?dst_uin={qqId}&spec=640&img_type=jpg').content)
@@ -60,7 +63,7 @@ def generate_meme():
     meme = Image.new("RGB", (1024, 1024), (255, 255, 255))
     fontDB = ImageFont.truetype(r'C:\Windows\Fonts\MSYHBD.TTC')
     font = ImageFont.truetype(r'C:\Windows\Fonts\MSYH.TTC')
-    draw = ImageDraw.Draw(meme)
+    # draw = ImageDraw.Draw(meme)
     with Pilmoji(meme) as emoji:
         auto_newline(emoji, (10, 10), f'请问你见到 {name} 了吗', fontDB, 145, 1004)
         meme.paste(img.resize((690, 690)), (167, 160))
@@ -70,6 +73,26 @@ def generate_meme():
     meme.save(io, 'jpeg')
     io.seek(0)
     return send_file(io, 'image/jpeg')
+
+@app.route('/')
+def index():
+    return \
+'''
+<!DOCTYPE html>
+<head>
+    <title> 神の表情包 </title>
+</head>
+<body>
+    <form action="/meme" method="POST">
+        <label>QQ号（qq=）<input name="qq" required>*必填</label><br>
+        <label>显示名称（name=）<input name="name">默认为QQ号</label><br>
+        <label>评论（comment=）<input name="comment">默认为“牛逼”</label><br>
+        <label>称呼（call=）<input name="call">默认为“神”</label><br>
+        <label>称谓（appellation=）<input name="appellation">默认为“他”</label><br>
+        <input type="submit">
+    </form>
+</body>
+'''
 
 if __name__ == '__main__':
     app.run('0.0.0.0', 8000, debug=True)
