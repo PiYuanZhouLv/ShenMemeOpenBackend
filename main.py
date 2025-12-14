@@ -21,7 +21,7 @@ def auto_newline(emoji: Pilmoji, xy: tuple[int, int], text: str, font: ImageFont
     div = int((width/max_width)**(0.5+5/len(text)))
     # div = 2
     if div==0:
-        emoji.text((xy[0]+(max_width-width)//2, xy[1]), text, 'black', font.font_variant(size=init_fontsize), align='center')
+        emoji.text((xy[0]+(max_width-width)//2, xy[1]), text, 'black', font.font_variant(size=init_fontsize), align='center', emoji_position_offset=(0, 20))
         return
     ffont = font.font_variant(size=init_fontsize//int(div))
     step = len(text) // div + 1
@@ -33,7 +33,7 @@ def auto_newline(emoji: Pilmoji, xy: tuple[int, int], text: str, font: ImageFont
         y = 0
         for line in lines:
             dx, dy = text_emoji.getsize(line, ffont)
-            text_emoji.text(((img_text.size[0]-dx)//2, y), line, 'black', ffont, align='center')
+            text_emoji.text(((img_text.size[0]-dx)//2, y), line, 'black', ffont, align='center', emoji_position_offset=(0, 20))
             y += dy
     rate = min(max_width/img_text.size[0], init_fontsize/img_text.size[1])
     new_size = tuple(map(lambda x: x*rate, img_text.size))
