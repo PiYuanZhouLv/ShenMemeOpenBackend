@@ -49,10 +49,10 @@ def generate_meme():
         return 'Param "qq" is required.', 400
     
     qqId = request.values['qq']
-    name = request.values.get('name', None) or qqId
-    comment = request.values.get('comment', None) or '牛逼'
-    call = request.values.get('call', None) or '神'
-    appel = request.values.get('appellation', None) or '他'
+    name = request.values.get('name', qqId)
+    comment = request.values.get('comment', '牛逼')
+    call = request.values.get('call', '神')
+    appel = request.values.get('appellation', '他')
 
     try:
         io = BytesIO(rq.get(f'http://q.qlogo.cn/headimg_dl?dst_uin={qqId}&spec=640&img_type=jpg').content)
@@ -83,26 +83,64 @@ def index():
     <title> 神の表情包 </title>
 </head>
 <body>
-    <form action="/meme" method="POST">
-        <label>QQ号（qq=）<input name="qq" placeholder="必填" required>*必填</label><br>
-        <label>显示名称（name=）<input name="name">默认为QQ号</label><br>
-        <label>评论（comment=）<input placeholder="牛逼" name="comment">默认为“牛逼”</label><br>
-        <label>称呼（call=）<input placeholder="神" name="call">默认为“神”</label><br>
-        <label>称谓（appellation=）<input placeholder="他" name="appellation">默认为“他”</label><br>
-        GET URL: <a id="url"></a><br>
-        Submit by POST: <input type="submit">
-    </form>
+    <style>
+        section {
+            padding: 30px;
+            border: 1px solid;
+            border-radius: 10px;
+            align-content: center;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+    </style>
+    <content style="display: flex; gap: 50px; justify-content: center; flex-wrap: wrap;">
+        <section>
+            <h2>召唤神の表情包</h2>
+            <form action="/meme" method="POST">
+                <label>QQ号（qq=）<input name="qq" placeholder="必填" required>*必填</label><br>
+                <label>显示名称（name=）<input name="name">默认为QQ号</label><br>
+                <label>评论（comment=）<input placeholder="牛逼" name="comment">默认为“牛逼”</label><br>
+                <label>称呼（call=）<input placeholder="神" name="call">默认为“神”</label><br>
+                <label>称谓（appellation=）<input placeholder="他" name="appellation">默认为“他”</label><br>
+                GET URL: <a id="url"></a><br>
+                Submit by POST: <input type="submit">
+            </form>
+        </section>
+        <section>
+            <h2>预览<sub>(仅供参考)</sub></h2>
+            <div style="text-align: center;width: 256px;min-height: 256px;display: flex;flex-direction: column;justify-content: center;align-items: center;flex-wrap: nowrap;border: 1px dashed;overflow: hidden;">
+                <span style="font-size: 23px; font-weight: bold;">请问你见到 <span id="view-name"></span> 了吗</span>
+                <img id="view-avatar" style="width: 160px; height: 160px;">
+                <span style="font-size: 17px; font-weight: bold;">非常<span id="view-comment"></span>！简直就是<span id="view-call"></span>!</span>
+                <span style="font-size: 10px"><span id="view-appellation"></span>也没失踪也没怎么样，我只是觉得你们都该看一下</span>
+            </div>
+            <div style="width: 256px; display:flex; gap: 5px; margin-top: 10px"><span>*</span><span>该预览由网页自动生成，与后端生成效果有一定差异</span></div>
+        </section>
+    </content>
     <script>
         document.querySelector("input[name=name]").placeholder = document.querySelector("input[name=qq]").value || "默认为QQ号";
         document.querySelector("input[name=qq]").addEventListener("input", ()=>{
             document.querySelector("input[name=name]").placeholder = document.querySelector("input[name=qq]").value || "默认为QQ号";
         })
+        var updateAvatarTimeout;
+        function updateAvatar(){
+            if(!document.querySelector("input[name=qq]").value){
+                return;
+            }
+            document.getElementById('view-avatar').src = `http://q.qlogo.cn/headimg_dl?dst_uin=${document.querySelector("input[name=qq]").value}&spec=640&img_type=jpg`;
+        }
         function update(){
             if(!document.querySelector("input[name=qq]").value){
                 document.getElementById("url").href = '#';
                 document.getElementById("url").innerText = "QQ号为必填项";
                 return;
             }
+            if(updateAvatarTimeout){
+                clearTimeout(updateAvatarTimeout);
+            }
+            updateAvatarTimeout = setTimeout(updateAvatar, 1000);
             document.getElementById("url").innerText = "/meme";
             let first = true;
             for(let i of document.forms[0].elements){
@@ -112,6 +150,14 @@ def index():
                 if(i.value){
                     document.getElementById("url").innerText += `${first?"?":"&"}${i.name}=${i.value}`;
                     first = false;
+                }
+                if(i.name!=="qq"){
+                    document.getElementById(`view-${i.name}`).innerText = i.value || {
+                        name: document.querySelector("input[name=qq]").value,
+                        comment: "牛逼",
+                        call: "神",
+                        appellation: "他"
+                    }[i.name]
                 }
             }
             document.getElementById("url").href = document.getElementById("url").innerText;
